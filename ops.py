@@ -38,7 +38,7 @@ def mod_exp(n: int, pow: int, mod: int) -> int:
         return 0
 
     while pow > 0:
-        if ((pow & 1) == 1):
+        if (pow & 1) == 1:
             result = (result * n) % mod
 
         pow >>= 1
@@ -94,17 +94,23 @@ def is_prime(n: int, rounds: int = 128) -> bool:
 
     if n <= 3:
         return True
- 
+
     # Find r such that n =
     # 2^d * r + 1 for some r >= 1
     d = n - 1
 
     while d % 2 == 0:
         d //= 2
- 
+
     # Iterate given number of 'k' times
     for _ in range(rounds):
         if not miller_test(n, d):
             return False
- 
+
     return True
+
+
+def randbits(length: int) -> int:
+    rand = abs(secrets.randbits(length + 1))
+
+    return rand & ((1 << length) - 1)

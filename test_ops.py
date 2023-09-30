@@ -1,4 +1,4 @@
-from ops import gcd, gcde, mod_exp, is_prime
+from ops import gcd, gcde, mod_exp, is_prime, randbits
 
 
 def test_gcd():
@@ -124,7 +124,9 @@ def test_mod_exp():
 
     # Test case 10: Modular exponentiation with a prime modulus
     result = mod_exp(17, 42, 23)
-    assert result == 16  # (17^42) % 23 = 4773695331839566234818968439734627784374274207965089 % 23 = 16
+    assert (
+        result == 16
+    )  # (17^42) % 23 = 4773695331839566234818968439734627784374274207965089 % 23 = 16
 
 
 def test_is_prime():
@@ -172,3 +174,9 @@ def test_is_prime():
 
     # Test case 15: Non-prime number (large non-prime)
     assert not is_prime(999999941)
+
+
+def test_randbits():
+    for _ in range(10000):
+        rand = randbits(32)
+        assert rand > 0 and rand < (1 << 32)
