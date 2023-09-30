@@ -13,9 +13,6 @@ def gcd(a: int, b: int) -> int:
 
 
 def gcde(r1: int, r2: int) -> tuple[int, int, int]:
-    # if r1 < r2:
-    #     r1, r2 = r2, r1
-
     s1, t1 = 1, 0
     s2, t2 = 0, 1
 
