@@ -1,4 +1,3 @@
-from typing import Any, Callable
 from typing_extensions import override
 from ops import gcd, is_prime, mod_exp, gcde, randbits
 from dataclasses import dataclass
