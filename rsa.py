@@ -35,8 +35,8 @@ class RSA:
     @staticmethod
     def generate(key_len: int, e: int, p: int = -1, q: int = -1) -> Keys:
         if p < 0 or q < 0:
-            p = RSA.gen_prime(key_len // 2, e)
-            q = RSA.gen_prime(key_len // 2, e)
+            p = RSA.gen_prime(key_len // 2, e, {e})
+            q = RSA.gen_prime(key_len // 2, e, {e, p})
 
         n = p * q
         euler = (p - 1) * (q - 1)
@@ -49,11 +49,11 @@ class RSA:
         return Keys(public=(n, e), private=(n, d))
 
     @staticmethod
-    def gen_prime(bits: int, e: int) -> int:
+    def gen_prime(bits: int, e: int, exclude: set[int] = set()) -> int:
         while True:
             n = randbits(bits) | 1
 
-            if n > 1 and is_prime(n) and gcd(e, n - 1) == 1:
+            if n > 1 and n not in exclude and is_prime(n) and gcd(e, n - 1) == 1:
                 return n
 
 
