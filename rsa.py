@@ -61,7 +61,7 @@ class RSAOAEP(RSA):
         super().__init__(key_len, e, p, q)
 
     @override
-    def encrypt(self, message: bytes | bytearray, hash: bytes | bytearray, seed: bytes | bytearray, hash_function = hashlib.sha1) -> bytes: # type: ignore[override]
+    def encrypt(self, message: bytes | bytearray, hash: bytes | bytearray, seed: bytes | bytearray) -> bytes: # type: ignore[override]
         t, h = self.key_len // 8, len(hash)
         zero_padding = (t - 2 * h - 2) - len(message)
         z_len = t - h - 1
@@ -69,13 +69,13 @@ class RSAOAEP(RSA):
         assert zero_padding >= 0
 
         partial_pad = hash + (b"\x00" * zero_padding) + b"\x01" + message
-        seed_mask = RSAOAEP.mask_gen(seed, z_len, hash_function)
+        seed_mask = RSAOAEP.mask_gen(seed, z_len)
 
         assert len(partial_pad) == len(seed_mask)
 
         z = int.from_bytes(seed_mask) ^ int.from_bytes(partial_pad)
         z_prime = z.to_bytes(z_len, "big")
-        z_prime_mask = RSAOAEP.mask_gen(z_prime, h, hash_function)
+        z_prime_mask = RSAOAEP.mask_gen(z_prime, h)
         r2 = int.from_bytes(seed) ^ int.from_bytes(z_prime_mask)
         r_prime = r2.to_bytes(h, "big")
         padded = b"\x00" + r_prime + z_prime
@@ -87,32 +87,34 @@ class RSAOAEP(RSA):
         return ciphertext.to_bytes(t, "big")
 
     @override
-    def decrypt(self, ciphertext: bytes | bytearray, h: int, message_len: int, hash_function = hashlib.sha1) -> bytes: # type: ignore[override]
+    def decrypt(self, ciphertext: bytes | bytearray, h: int, message_len: int) -> bytes: # type: ignore[override]
         t = self.key_len // 8
         z_len = t - h - 1
         y = int.from_bytes(ciphertext, "big")
         x = super().decrypt(y).to_bytes(t, "big")
 
         r_prime, z_prime = x[1: 1 + h], x[1 + h:]
-        z_mask = RSAOAEP.mask_gen(z_prime, h, hash_function)
+        z_mask = RSAOAEP.mask_gen(z_prime, h)
         seed = int.from_bytes(z_mask, "big") ^ int.from_bytes(r_prime)
-        r_mask = RSAOAEP.mask_gen(seed.to_bytes(h), z_len, hash_function)
+        r_mask = RSAOAEP.mask_gen(seed.to_bytes(h), z_len)
         z = int.from_bytes(r_mask) ^ int.from_bytes(z_prime)
 
         return z.to_bytes(z_len, "big")[-message_len:]
 
     @staticmethod
-    def mask_gen(seed: bytes | bytearray, mask_len: int, hash_function = hashlib.sha1) -> bytes:
-        hash_len: int = hash_function().digest_size
-        assert mask_len <= (hash_len << 32)
+    def mask_gen(input: bytes | bytearray, length: int) -> bytes:
+        return hashlib.shake_256(input).digest(length)
 
-        counter = 0
-        mask = bytearray()
+        # hash_len: int = hash_function().digest_size
+        # assert length <= (hash_len << 32)
 
-        while len(mask) < mask_len:
-            counter_bytes = counter.to_bytes(4, "big")
-            hash = hash_function(seed + counter_bytes).digest()
-            mask.extend(hash)
-            counter += 1
+        # counter = 0
+        # mask = bytearray()
 
-        return mask[:mask_len]
+        # while len(mask) < length:
+        #     counter_bytes = counter.to_bytes(4, "big")
+        #     hash = hash_function(seed + counter_bytes).digest()
+        #     mask.extend(hash)
+        #     counter += 1
+
+        # return mask[:length]
